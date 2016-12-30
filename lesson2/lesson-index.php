@@ -16,3 +16,29 @@ echo 'Мне ',$age,' лет';
 
 unset($name, $age);
 //----------------- task_1 (end) -------------------
+
+/* 
+ * Задание 2
+ * - Создайте константу и присвойте ей значение города в котором живете
+ * - Прежде чем выводить константу на экран, проверьте, действительно ли она объявлена и существует
+ * - Выведите значение объявленной константы
+ * - Попытайтесь изменить значение созданной константы
+ */
+
+echo '<br/>';
+
+const CITY = 'Kharkov';
+
+if(defined('CITY')) {
+    echo CITY;
+}
+//CITY = 'bla'; // invalid. error of compile time
+
+//define(CITY,'Kharkov');
+//
+//if(defined('CITY')) {
+//    echo CITY;
+//}
+//'CITY' = 'la';// invalid. runtime error. Parse error: parse error in ../freelance.evo/lesson2/lesson-index.php on line 42
+
+
