@@ -24,8 +24,6 @@ function rand_timestamp($value) {
 
 $date = array_map('rand_timestamp', $date);
 
-//var_dump($date);
-
 //Сделайте вывод сообщения на экран о том, какой день в сгенерированном массиве 
 //получился наименьшим, а какой месяц наибольшим
 
@@ -39,11 +37,29 @@ function get_num_day_by_index(array $values, $index) {
     return get_num_day_by_timestamp($values[$index]);
 }
 
+function get_num_month_by_timestamp($timestamp) {
+    return localtime($timestamp,TRUE)['tm_mon'];
+}
+
+function get_num_month_by_index(array $values, $index) {
+    return get_num_month_by_timestamp($values[$index]);
+}
+
 function print_day_number($value,$index) {
     echo '['.$index.'] day_number = '.get_num_day_by_timestamp($value).'<br/>';
 }
 
-array_walk($date, 'print_day_number');
+function print_month_number($value,$index) {
+    echo '['.$index.'] month_number = '.get_num_month_by_timestamp($value).'<br/>';
+}
+
+function print_date($value,$index) {
+    echo '['.$index.'] date = '.date('d M(m) Y',$value).'<br/>';
+}
+
+//array_walk($date, 'print_date');
+//array_walk($date, 'print_day_number');
+//array_walk($date, 'print_month_number');
 
 function find_min_day_number($carry, $item) {
     return min(get_num_day_by_timestamp($item),$carry);
@@ -53,5 +69,13 @@ $min_day_number = array_reduce($date,
         'find_min_day_number',get_num_day_by_index($date,0));
 echo 'min_day_number = '.$min_day_number.'<br/>';
 
-//var_dump($date);
+function find_max_month_number($carry, $item) {
+    return max(get_num_month_by_timestamp($item),$carry);
+}
+
+$max_month_number = array_reduce($date, 
+        'find_max_month_number',get_num_month_by_index($date,0));
+$correct_const = 1;
+echo 'max_month_number = '.($max_month_number+$correct_const).'<br/>';
+
 
