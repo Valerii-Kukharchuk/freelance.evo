@@ -9,7 +9,7 @@
  * - Вам нужно сделать секцию "Скидки", где известить покупателя о том, что если он заказал "игрушка детская велосипед" в количестве >=3 штук, то на эту позицию ему 
  * автоматически дается скидка 30% (соответственно цены в корзине пересчитываются тоже автоматически)
  * 3) у каждого товара есть автоматически генерируемый скидочный купон diskont, используйте переменную функцию, чтобы делать скидку на итоговую цену в корзине
- * diskont0 = скидок нет, diskont1 = 10%, diskont2 = 20%$ini_string='
+ * diskont0 = скидок нет, diskont1 = 10%, diskont2 = 20%$
 
  */
 
@@ -36,12 +36,97 @@ diskont = diskont'.  mt_rand(0, 2).';
 $bd =  parse_ini_string($ini_string, true);
 //print_r($bd);
 
-const KEY_NAME = 'цена';
+//--------------------------------------------------
+//--------------------------------------------------
+
+//interface of params of any item of order
+const KEY_NAME = 'name';
 const KEY_PRICE = 'цена';
 const KEY_QUANTITY = 'количество заказано';
 const KEY_QUANTITY_IN_STORE = 'осталось на складе';
 const KEY_DISCONT = 'diskont';
 
+//--------------------------------------------------
+//--------------------------------------------------
+
+//- Вам нужно сделать секцию "Уведомления", где необходимо извещать покупателя 
+//о том, что нужного количества товара не оказалось на складе
+
+$messages_section = array();
+
+
+function quantity_in_store_is_enough($item) {
+    return ($item[KEY_QUANTITY_IN_STORE] >= $item[KEY_QUANTITY]);
+}
+
+function checkup_item_on_quantity_in_store($carry, $item) {
+    if(!is_null($carry) && !$carry ) {
+        return FALSE;
+    }   
+    return quantity_in_store_is_enough($item);
+}
+
+//return TRUE if quantity is enough for all order
+function checkup_order_on_quantity_in_store($order) {    
+    return array_reduce($order, checkup_item_on_quantity_in_store);
+}
+
+
+function calc_new_item_quantity($item) {
+    //($item[KEY_QUANTITY_IN_STORE] >= $item[KEY_QUANTITY]);
+    if($item[KEY_QUANTITY_IN_STORE] == 0) {
+        return 0;
+    } else {
+        return ;
+    }
+}
+
+function form_new_messaged($item) {
+    $msg = 'Товар \"'.$item[KEY_NAME].'\"';
+    if( $item[KEY_QUANTITY_IN_STORE] == 0 ) {
+        $msg .= ' не доступен и из Вашего заказа исключен';
+    } else {
+        $msg .= ' доступен только в кол-ве '.$item[KEY_QUANTITY_IN_STORE].' ед.';
+        $msg .= ' Кол-во товара в заказе изменено с '.$item[KEY_QUANTITY]
+                .' на '.$item[KEY_QUANTITY_IN_STORE].' ед.';
+    }
+    return msg;
+}
+
+function create_new_message($item) {
+    global $messages_section;  
+    array_push($messages_section, form_new_messaged($item));
+}
+
+function update_order_and_messages_section($item) {
+    if( quantity_in_store_is_enough($item) ) {
+        return $item;        
+    }
+    
+    create_new_message($item[KEY_QUANTITY],$item[KEY_QUANTITY_IN_STORE]);
+    $item[KEY_QUANTITY] = $item[KEY_QUANTITY_IN_STORE];
+    
+    return $item;
+}
+
+function convert_order($order) {    
+    function add_item_name_to_item_params($item_params,$item_name) {
+        $item_params[KEY_NAME] = $item_name;
+    }    
+    array_map(add_item_name_to_item_params, $order, array_keys($order));
+}
+
+function main_lesson4() {
+    global $bd;
+    $order = $bd;
+    
+    convert_order($order);
+    
+    if(!checkup_order_on_quantity_in_store($order) ) {
+        array_map(update_order_and_messages_section, $order);
+    }
+    show_orders($order, orders_view_table);
+}
 
 //--------------------------------------------------
 //--------------------------------------------------
@@ -94,24 +179,24 @@ function print_table_head_line() {
 }
 
 
-function print_table_last_line($total_price) {
+function print_table_last_line($total) {
     define($TOTAL, 'Итого');
     
     p_tr_b();
     p_td($TOTAL);
     echo '<td colspan=2></td>';
-    p_td($total_price);
+    p_td($total);
     p_tr_e();
 }
 
-function show_orders_table_view($orders, $total_price) {
+function show_orders_table_view($orders, $total_info) {
     echo '<table>';
     
     print_table_head_line();
     
     array_walk($orders, 'print_one_table_line');
     
-    print_table_last_line($total_price);
+    print_table_last_line($total_info);
     
     echo '</table>';
 }
