@@ -8,8 +8,9 @@
  * - Вам нужно сделать секцию "Уведомления", где необходимо извещать покупателя о том, что нужного количества товара не оказалось на складе
  * - Вам нужно сделать секцию "Скидки", где известить покупателя о том, что если он заказал "игрушка детская велосипед" в количестве >=3 штук, то на эту позицию ему 
  * автоматически дается скидка 30% (соответственно цены в корзине пересчитываются тоже автоматически)
- * 3) у каждого товара есть автоматически генерируемый скидочный купон diskont, используйте переменную функцию, чтобы делать скидку на итоговую цену в корзине
- * diskont0 = скидок нет, diskont1 = 10%, diskont2 = 20%$
+ * 3) у каждого товара есть автоматически генерируемый скидочный купон diskont, 
+ * используйте переменную функцию, чтобы делать скидку на итоговую цену в корзине
+ * diskont0 = скидок нет, diskont1 = 10%, diskont2 = 20%
 
  */
 
@@ -36,6 +37,23 @@ diskont = diskont'.  mt_rand(0, 2).';
 $bd =  parse_ini_string($ini_string, true);
 //print_r($bd);
 
+function main_lesson4() {
+    global $bd;
+    $order = $bd;
+    
+    convert_order($order);
+    
+    if(!checkup_order_on_quantity_in_store($order) ) {
+        array_map(update_order_and_messages_section, $order);
+    }
+    
+    check_up_order_on_special_discounts($order);
+    
+    check_up_order_on_usual_discounts($order);
+    
+    show_orders($order, orders_view_table);
+}
+
 //--------------------------------------------------
 //--------------------------------------------------
 
@@ -59,26 +77,16 @@ function quantity_in_store_is_enough($item) {
     return ($item[KEY_QUANTITY_IN_STORE] >= $item[KEY_QUANTITY]);
 }
 
-function checkup_item_on_quantity_in_store($carry, $item) {
-    if(!is_null($carry) && !$carry ) {
-        return FALSE;
-    }   
-    return quantity_in_store_is_enough($item);
-}
-
 //return TRUE if quantity is enough for all order
 function checkup_order_on_quantity_in_store($order) {    
-    return array_reduce($order, checkup_item_on_quantity_in_store);
-}
-
-
-function calc_new_item_quantity($item) {
-    //($item[KEY_QUANTITY_IN_STORE] >= $item[KEY_QUANTITY]);
-    if($item[KEY_QUANTITY_IN_STORE] == 0) {
-        return 0;
-    } else {
-        return ;
+    function checkup_item_on_quantity_in_store($carry, $item) {
+        if(!is_null($carry) && !$carry ) {
+            return FALSE;
+        }   
+        return quantity_in_store_is_enough($item);
     }
+    
+    return array_reduce($order, checkup_item_on_quantity_in_store);
 }
 
 function form_new_messaged($item) {
@@ -116,16 +124,74 @@ function convert_order($order) {
     array_map(add_item_name_to_item_params, $order, array_keys($order));
 }
 
-function main_lesson4() {
-    global $bd;
-    $order = $bd;
-    
-    convert_order($order);
-    
-    if(!checkup_order_on_quantity_in_store($order) ) {
-        array_map(update_order_and_messages_section, $order);
+
+
+//--------------------------------------------------
+//--------------------------------------------------
+
+//- Вам нужно сделать секцию "Скидки", где известить покупателя о том, что если он заказал "игрушка детская велосипед" в количестве >=3 штук, то на эту позицию ему 
+// автоматически дается скидка 30% (соответственно цены в корзине пересчитываются тоже автоматически)
+
+$discounts = '';
+
+
+function checkup_item_on_SPECIAL_discounts_is_existed($item) {
+    define(NAME_ONLY_ONE_DISCOUNT_ITEM, 'игрушка детская велосипед');
+    return ($item[KEY_NAME] == NAME_ONLY_ONE_DISCOUNT_ITEM && $item[KEY_QUANTITY] >= 3);
+}
+
+function update_price_of_special_discount_item(&$item) {
+    $item[KEY_PRICE] *= 0.7;
+}
+
+function create_new_special_discounts_message_for_item($item) {
+    global $discounts;
+    $discounts .= 'Вы получили специальную скиду на товар \"'.
+            $item[KEY_NAME].'\". Новая цена за единицу товара составит '.
+            $item[KEY_PRICE];
+}
+
+function check_up_item_on_special_discounts($item) {
+    if(checkup_item_on_special_discounts_is_existed($item) ) {
+        update_price_of_special_discount_item($item);
+        create_new_special_discounts_message_for_item($item);
     }
-    show_orders($order, orders_view_table);
+    return $item;
+}
+
+function check_up_order_on_special_discounts($order) {
+    array_map(check_up_item_on_special_discounts, $order);
+}
+
+//--------------------------------------------------
+//--------------------------------------------------
+
+//3) у каждого товара есть автоматически генерируемый скидочный купон diskont, 
+// * используйте переменную функцию, чтобы делать скидку на итоговую цену в корзине
+// * diskont0 = скидок нет, diskont1 = 10%, diskont2 = 20%
+
+function calc_percent_value_diskont($item) {
+    return substr($item[KEY_DISCONT], -1) * 10;
+}
+
+function checkup_item_on_usual_discounts_is_existed($item) {
+    define(NAME_ONLY_ONE_DISCOUNT_ITEM, 'игрушка детская велосипед');
+    return !($item[KEY_NAME] == NAME_ONLY_ONE_DISCOUNT_ITEM);
+}
+
+function update_price_of_usual_discount_item(&$item) {
+    $item[KEY_PRICE] *= (1 - calc_percent_value_diskont($item)/100);
+}
+
+function check_up_item_on_usual_discounts($item) {
+    if(checkup_item_on_usual_discounts_is_existed($item) ) {
+        update_price_of_usual_discount_item($item);
+    }
+    return $item;
+}
+
+function check_up_order_on_usual_discounts($order) {
+    array_map(check_up_item_on_usual_discounts, $order);
 }
 
 //--------------------------------------------------
@@ -161,20 +227,20 @@ function print_one_table_line($item, $index) {
 
 function print_table_head_line() {
     //1) Перечень заказанных товаров, их цену, кол-во и остаток на складе
-    define($COL_NAME_GOODS, 'Наименование');
-    define($COL_NAME_QUANTITY, 'Кол-во');
-    define($COL_NAME_QUANTITY_IN_STORE, 'Остаток');
-    define($COL_NAME_PRICE, 'Цена');
+    define(COL_NAME_GOODS, 'Наименование');
+    define(COL_NAME_QUANTITY, 'Кол-во');
+    define(COL_NAME_QUANTITY_IN_STORE, 'Остаток');
+    define(COL_NAME_PRICE, 'Цена');
     
     function p_th($text) {
         echo '<th>',$text,'</th>';
     }
     
     p_tr_b();
-    p_th($COL_NAME_GOODS);
-    p_th($COL_NAME_QUANTITY);
-    p_th($COL_NAME_QUANTITY_IN_STORE);
-    p_th($COL_NAME_PRICE);
+    p_th(COL_NAME_GOODS);
+    p_th(COL_NAME_QUANTITY);
+    p_th(COL_NAME_QUANTITY_IN_STORE);
+    p_th(COL_NAME_PRICE);
     p_tr_e();
 }
 
