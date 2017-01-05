@@ -1,51 +1,18 @@
 <?php
 
 
-$news='Четыре новосибирские компании вошли в сотню лучших работодателей
-Выставка университетов США: открой новые горизонты
-Оценку «неудовлетворительно» по качеству получает каждая 5-я квартира в новостройке
-Студент-изобретатель раскрыл запутанное преступление
-Хоккей: «Сибирь» выстояла против «Ак Барса» в пятом матче плей-офф
-Здоровое питание: вегетарианская кулинария
-День святого Патрика: угощения, пивной теннис и уличные гуляния с огнем
-«Красный факел» пустит публику на ночные экскурсии за кулисы и по закоулкам столетнего здания
-Звезды телешоу «Голос» Наргиз Закирова и Гела Гуралиа споют в «Маяковском»';
-
-$news = explode("\n", $news);
-
-const param_id = 'id';
-define('COUNT_NEWS',count($news));
-
-function checkup_valid_id($id) {
-    return is_numeric($id) && $id >= 0 && $id < COUNT_NEWS;
-}
+include_once 'news.php';
 
 
-function main_($news) {
-    
+function main_get($news) {
     $id = filter_input(INPUT_GET, param_id);
     
-    if( is_null($id) ) {
-        header("HTTP/1.0 404 Not found");
-        echo 'Parametr "id" required in an URL! <br/>';
-        echo 'Correct using: <br/>';
-        echo ' ...?id={0..',COUNT_NEWS,'} -- get news by its "id". ','<br/>';
-        echo ' ...?id={!(0..',COUNT_NEWS,')} -- get whole list of news';
-        exit();
-    } 
+    echo '<h3>Метод GET</h3>';
     
-    if( checkup_valid_id($id) ) {
-        echo '<h3>Новость [',$id,']:</h3>';
-        echo $news[$id],'<br/>';
-    } else {      
-        echo '<h3>Все новости:</h3>';
-        foreach ($news as $value) {
-            echo $value,'<br/>';
-        }
-    }
+    show_news($news, $id);    
 }
 
-main_($news);
+main_get($news);
 
 /*
 /GET
