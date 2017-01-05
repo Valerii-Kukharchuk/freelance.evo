@@ -147,10 +147,10 @@ function update_order_and_messages_section($item) {
     }
     
     create_new_message($item);
-    $item[KEY_QUANTITY] = $item[KEY_QUANTITY_IN_STORE];
     
     $item[KEY_DESCRIPTION] = form_message_of_quantity_item($item);
-    
+    $item[KEY_QUANTITY] = $item[KEY_QUANTITY_IN_STORE];
+   
     return $item;
 }
 
