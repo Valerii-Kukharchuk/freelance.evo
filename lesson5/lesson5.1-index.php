@@ -10,49 +10,42 @@ $news='Четыре новосибирские компании вошли в с
 День святого Патрика: угощения, пивной теннис и уличные гуляния с огнем
 «Красный факел» пустит публику на ночные экскурсии за кулисы и по закоулкам столетнего здания
 Звезды телешоу «Голос» Наргиз Закирова и Гела Гуралиа споют в «Маяковском»';
+
 $news = explode("\n", $news);
-print_r($news);
 
 const param_id = 'id';
+define('COUNT_NEWS',count($news));
 
 function checkup_valid_id($id) {
-    global $news;
-    return is_numeric($id) && $id >= 0 && $id < count($news);
+    return is_numeric($id) && $id >= 0 && $id < COUNT_NEWS;
 }
 
-function show_news_by_id($id) {
-    global $news;
-    echo $news[$id],'<br/>';
-}
 
-function show_all_news() {
-    global $news;
-    foreach ($news as $value) {
-        echo $value,'<br/>';
-    }
-}
-
-function main_() {
-    $id = $_GET[param_id];
+function main_($news) {
     
-    if(is_null($id)) {
-        header("HTTP/1.0 404 Param ".param_id." is not found");
-        //exit();
-    }
-    else {
+    $id = filter_input(INPUT_GET, param_id);
+    
+    if( is_null($id) ) {
+        header("HTTP/1.0 404 Not found");
+        echo 'Parametr "id" required in an URL! <br/>';
+        echo 'Correct using: <br/>';
+        echo ' ...?id={0..',COUNT_NEWS,'} -- get news by its "id". ','<br/>';
+        echo ' ...?id={!(0..',COUNT_NEWS,')} -- get whole list of news';
+        exit();
+    } 
     
     if( checkup_valid_id($id) ) {
-        show_news_by_id($id);
-    } else {
-        show_all_news();
-    }
-    
+        echo '<h3>Новость [',$id,']:</h3>';
+        echo $news[$id],'<br/>';
+    } else {      
+        echo '<h3>Все новости:</h3>';
+        foreach ($news as $value) {
+            echo $value,'<br/>';
+        }
     }
 }
 
-echo '<br/><br/><br/>';
-
-main_();
+main_($news);
 
 /*
 /GET
