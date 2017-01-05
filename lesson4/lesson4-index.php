@@ -41,6 +41,8 @@ print_r($bd);
 //a flag to show an order as a table view
 const orders_view_table = 1;
 
+const PERCENT_OF_SPECIAL_DISCOUNT = 30;
+
 //interface of params of any item of order
 const KEY_NAME = 'name';
 //define('KEY_NAME','name');
@@ -54,11 +56,6 @@ const KEY_DISCONT = 'diskont';
 const KEY_ITEM_DISCONT = 'item.diskont';
 const KEY_DESCRIPTION = 'description';
 
-//an array to storage special messages in the messages setction 
-$messages_section = array();
-
-//a string to storage discount messages
-$discounts = array();
 
 //В секции ИТОГО должно быть указано: сколько всего наименовний было заказано, 
 //каково общее количество товара, какова общая сумма заказа
@@ -68,32 +65,36 @@ const KEY_TOTAL_AMOUNT_OF_ITEMS = 'amount_of_items';
 const KEY_TOTAL_PRICE_OF_ALL_ITEMS = 'price_of_all_items';
 
 
-main_lesson4();
 
 //--------------------------------------------------
 //--------------------------------------------------
 
-function main_lesson4() {
-    global $bd;
+function main_lesson4($bd) {
+
+    //an array to storage special messages in the messages setction 
+    $messages_section = array();
+    //a string to storage discount messages
+    $discounts = array();
+    
     $order = $bd;
+    
+    init_all_defines();
 
     convert_order($order);
     
-    if(!checkup_order_on_quantity_in_store($order) ) {
-        $order = array_map('update_order_and_messages_section', $order);
-    }
+    if_not_enough_quantity_in_store_update_order_and_messages_section($order, $messages_section);
+    if_is_existed_special_discounts_update_order_and_discount_section($order,$discounts);
     
-    check_up_order_on_special_discounts($order);
-    check_up_order_on_usual_discounts($order);
+    $order = array_map('check_up_item_on_usual_discounts', $order);
     
-     //= array();
     $total_info = calc_total_info($order);
     
+    echo '<br/>';
     show_orders($order, orders_view_table);
     show_section_total_info($total_info);
     
-    if_is_existed_show_special_discounts_info();
-    if_is_existed_show_usual_discounts_info();
+    if_is_existed_show_special_discounts_info($messages_section);
+    if_is_existed_show_usual_discounts_info($discounts);
 }
 
 //--------------------------------------------------
@@ -119,37 +120,42 @@ function checkup_order_on_quantity_in_store($order) {
     return array_reduce($order, 'checkup_item_on_quantity_in_store');
 }
 
+function if_not_enough_quantity_in_store_update_order_and_messages_section(&$order,&$messages_section) {
+    $count_order = count($order);
+    for ($index = 0; $index < $count_order; $index++) {
+        $item = $order[$index];
+        if( quantity_in_store_is_enough($item) ) {
+            continue;
+        }
+             
+        $msg_for_description = '';
+        $msg = 'Товар "'.$item[KEY_NAME].'"';
+        if( $item[KEY_QUANTITY_IN_STORE] == 0 ) {
+            $msg .= ' не доступен и из Вашего заказа исключен';
+        } else {
+            $msg_for_description = ' доступен только в кол-ве '
+                    .$item[KEY_QUANTITY_IN_STORE].' ед.'
+                    .' Кол-во товара в заказе изменено с '.$item[KEY_QUANTITY]
+                    .' на '.$item[KEY_QUANTITY_IN_STORE].' ед.';
+            $msg .= $msg_for_description;
+        }
+        $messages_section[] = $msg;
 
-function form_message_of_quantity_item($item) {
-    return ' доступен только в кол-ве '.$item[KEY_QUANTITY_IN_STORE].' ед.'.
-        ' Кол-во товара в заказе изменено с '.$item[KEY_QUANTITY]
-                .' на '.$item[KEY_QUANTITY_IN_STORE].' ед.';
-}
-
-function form_new_message($item) {
-    $msg = 'Товар "'.$item[KEY_NAME].'"';
-    if( $item[KEY_QUANTITY_IN_STORE] == 0 ) {
-        $msg .= ' не доступен и из Вашего заказа исключен';
-    } else {
-        $msg .= form_message_of_quantity_item($item);
+        $item[KEY_DESCRIPTION] = $msg_for_description;
+        $item[KEY_QUANTITY] = $item[KEY_QUANTITY_IN_STORE];
+        
+        $order[$index] = $item;
     }
-    return $msg;
-}
-
-function create_new_message($item) {
-    global $messages_section;  
-    array_push($messages_section, form_new_message($item));
-}
+}        
 
 function update_order_and_messages_section($item) {
+    global $messages_section;
+    
     if( quantity_in_store_is_enough($item) ) {
         return $item;        
     }
     
-    create_new_message($item);
     
-    $item[KEY_DESCRIPTION] = form_message_of_quantity_item($item);
-    $item[KEY_QUANTITY] = $item[KEY_QUANTITY_IN_STORE];
    
     return $item;
 }
@@ -175,44 +181,26 @@ function convert_order(&$order) {
 //- Вам нужно сделать секцию "Скидки", где известить покупателя о том, что если он заказал "игрушка детская велосипед" в количестве >=3 штук, то на эту позицию ему 
 // автоматически дается скидка 30% (соответственно цены в корзине пересчитываются тоже автоматически)
 
-function define_const_NAME_ONLY_ONE_DISCOUNT_ITEM() {
-    if(!defined('NAME_ONLY_ONE_DISCOUNT_ITEM')) {
-        define('NAME_ONLY_ONE_DISCOUNT_ITEM', 'игрушка детская велосипед');
+function if_is_existed_special_discounts_update_order_and_discount_section(&$order,&$discounts) {
+    $count_items = count($order);
+    for ($index = 0; $index < $count_items; $index++) {
+        $item = $order[$index];
+        
+        if( $item[KEY_NAME] == NAME_ONLY_ONE_DISCOUNT_ITEM 
+        && $item[KEY_QUANTITY] >= 3 ) 
+        {
+            $item[KEY_PRICE] *= (1 - PERCENT_OF_SPECIAL_DISCOUNT/100);
+
+            $discounts[] = 'Вы получили специальную скиду на товар "'.
+                $item[KEY_NAME].'". Новая цена за единицу товара составит '.
+                $item[KEY_PRICE];
+
+            $item[KEY_ITEM_DISCONT] = PERCENT_OF_SPECIAL_DISCOUNT;
+        }
+        
+        $order[$index] = $item;
     }
-}
-
-function checkup_item_on_special_discounts_is_existed($item) {    
-    define_const_NAME_ONLY_ONE_DISCOUNT_ITEM();
-    return ($item[KEY_NAME] == NAME_ONLY_ONE_DISCOUNT_ITEM && $item[KEY_QUANTITY] >= 3);
-}
-
-function get_percent_of_special_discount() {
-    return 30;
-}
-
-function update_price_of_special_discount_item(&$item) {
-    $item[KEY_PRICE] *= (1 - get_percent_of_special_discount()/100);
-}
-
-function create_new_special_discounts_message_for_item($item) {
-    global $discounts;
-    $msg = 'Вы получили специальную скиду на товар "'.
-            $item[KEY_NAME].'". Новая цена за единицу товара составит '.
-            $item[KEY_PRICE];
-    array_push($discounts, $msg);
-}
-
-function check_up_item_on_special_discounts($item) {
-    if(checkup_item_on_special_discounts_is_existed($item) ) {
-        update_price_of_special_discount_item($item);
-        create_new_special_discounts_message_for_item($item);
-        $item[KEY_ITEM_DISCONT] = get_percent_of_special_discount();
-    }
-    return $item;
-}
-
-function check_up_order_on_special_discounts(&$order) {
-    $order = array_map('check_up_item_on_special_discounts', $order);
+    
 }
 
 //--------------------------------------------------
@@ -226,25 +214,13 @@ function calc_percent_value_diskont($item) {
     return substr($item[KEY_DISCONT], -1) * 10;
 }
 
-function checkup_item_on_usual_discounts_is_existed($item) {
-    define_const_NAME_ONLY_ONE_DISCOUNT_ITEM();
-    return !($item[KEY_NAME] == NAME_ONLY_ONE_DISCOUNT_ITEM);
-}
-
-function update_price_of_usual_discount_item(&$item) {
-    $item[KEY_PRICE] *= (1 - calc_percent_value_diskont($item)/100);
-}
-
 function check_up_item_on_usual_discounts($item) {
-    if(checkup_item_on_usual_discounts_is_existed($item) ) {
-        update_price_of_usual_discount_item($item);
-        $item[KEY_ITEM_DISCONT] = calc_percent_value_diskont($item);
+    if(!($item[KEY_NAME] == NAME_ONLY_ONE_DISCOUNT_ITEM) ) {
+        $diskont = calc_percent_value_diskont($item);
+        $item[KEY_PRICE] *= (1 - $diskont/100);
+        $item[KEY_ITEM_DISCONT] = $diskont;
     }
     return $item;
-}
-
-function check_up_order_on_usual_discounts(&$order) {
-    $order = array_map('check_up_item_on_usual_discounts', $order);
 }
 
 //--------------------------------------------------
@@ -263,27 +239,34 @@ function calc_total_info($order) {
     return $total_info;
 }
 
-function get_count_existed_names($order) {
-    function calc_count_existed_names($carry, $item) {
-        return $carry += check_item_exist_in_order($item) ? 1 : 0;
-    }
-    return array_reduce($order, 'calc_count_existed_names',0);
+function get_count_existed_names($order) {    
+    return 
+        calc_sum($order, function ($item) {
+            return check_item_exist_in_order($item) ? 1 : 0;
+        });
 }
 
 function get_amount_of_items($order) {
-    function calc_amount_of_items($carry, $item) {
-        return $carry += $item[KEY_QUANTITY];
-    }
-    return array_reduce($order, 'calc_amount_of_items',0);
+    return 
+        calc_sum($order, function ($item) {
+            return $item[KEY_QUANTITY];
+        });
 }
 
 function get_price_of_all_items($order) {
-    function calc_price_of_all_items($carry, $item) {
-        return $carry += ($item[KEY_QUANTITY] > 0) ? $item[KEY_PRICE]*$item[KEY_QUANTITY] : 0;
-    }
-    return array_reduce($order, 'calc_price_of_all_items',0);
+    return 
+        calc_sum($order, function ($item) {
+            return ($item[KEY_QUANTITY] > 0) ? $item[KEY_PRICE]*$item[KEY_QUANTITY] : 0;
+        });
 }
 
+function calc_sum($array, callable $get_additional) {
+    $sum = 0;
+    foreach ($array as $item) {
+        $sum += call_user_func($get_additional,$item);
+    }
+    return $sum;
+}
 //--------------------------------------------------
 //--------------------------------------------------
 
@@ -292,49 +275,33 @@ function check_item_exist_in_order($item_param) {
     return ($item_param[KEY_QUANTITY] > 0);
 }
 
-function p_tr_b() {
-    echo '<tr>';
-}
-
-function p_tr_e() {
-    echo '</tr>';
-}
-
-function p_td($text) {
-    echo '<td>',$text,'</td>';
-}
-
-
-function get_quantity_string($item) {
-    $ret_str = '';
-    if($item[KEY_PREV_QUANTITY] != $item[KEY_QUANTITY]) {
-        return $ret_str .= $item[KEY_PREV_QUANTITY].' => '.$item[KEY_QUANTITY];
-    } 
-    return $ret_str .= $item[KEY_QUANTITY];
-}
-
-function print_one_table_line($item, $index) {
+function print_one_table_line($item) {
     if( check_item_exist_in_order($item) ) {
-        p_tr_b();
-        p_td($item[KEY_NAME]);
-        p_td(get_quantity_string($item));
-        p_td($item[KEY_QUANTITY_IN_STORE]);
+        echo '<tr>';
+        echo '<td>',$item[KEY_NAME],'</td>';
         
-        p_td($item[KEY_OLD_PRICE]);
+        if($item[KEY_PREV_QUANTITY] != $item[KEY_QUANTITY]) {
+            $quantity_string = $item[KEY_PREV_QUANTITY].' => '.$item[KEY_QUANTITY];
+        } 
+        else {
+            $quantity_string = $item[KEY_QUANTITY];
+        }      
+        echo '<td>',$quantity_string,'</td>';        
+        echo '<td>',$item[KEY_QUANTITY_IN_STORE],'</td>';        
+        echo '<td>',$item[KEY_OLD_PRICE],'</td>';
         
         $discount = $item[KEY_ITEM_DISCONT];
-        p_td( ( $discount > 0) ? $discount.'%' : '-' );
+        echo '<td>', ( $discount > 0) ? $discount.'%' : '-' ,'</td>';
         
-        p_td($item[KEY_PRICE]);
-        p_td($item[KEY_PRICE]*$item[KEY_QUANTITY]);
+        echo '<td>',$item[KEY_PRICE],'</td>';
+        echo '<td>',$item[KEY_PRICE]*$item[KEY_QUANTITY],'</td>';
               
-        p_td($item[KEY_DESCRIPTION]);
-        p_tr_e();
+        echo '<td>',$item[KEY_DESCRIPTION],'</td>';
+        echo '</tr>';
     }
 }
 
-function print_table_head_line() {
-    //1) Перечень заказанных товаров, их цену, кол-во и остаток на складе
+function init_all_defines() {
     if(!defined('COL_NAME_QUANTITY')) {
         define('COL_NAME_GOODS', 'Наименование');
     }
@@ -359,21 +326,23 @@ function print_table_head_line() {
     if(!defined('COL_NAME_DESCRIPTION')) {
         define('COL_NAME_DESCRIPTION', 'Примечание');
     }
-    
-    function p_th($text) {
-        echo '<th>',$text,'</th>';
+    if(!defined('NAME_ONLY_ONE_DISCOUNT_ITEM')) {
+        define('NAME_ONLY_ONE_DISCOUNT_ITEM', 'игрушка детская велосипед');
     }
-    
-    p_tr_b();
-    p_th(COL_NAME_GOODS);
-    p_th(COL_NAME_QUANTITY);
-    p_th(COL_NAME_QUANTITY_IN_STORE);
-    p_th(COL_NAME_OLD_PRICE);
-    p_th(COL_NAME_DISCOUNT);
-    p_th(COL_NAME_PRICE);
-    p_th(COL_NAME_TOTAL_PRICE);
-    p_th(COL_NAME_DESCRIPTION);
-    p_tr_e();
+}
+
+function print_table_head_line() {
+    //1) Перечень заказанных товаров, их цену, кол-во и остаток на складе
+    echo '<tr>';
+    echo '<th>',COL_NAME_GOODS,'</th>';
+    echo '<th>',COL_NAME_QUANTITY,'</th>';
+    echo '<th>',COL_NAME_QUANTITY_IN_STORE,'</th>';
+    echo '<th>',COL_NAME_OLD_PRICE,'</th>';
+    echo '<th>',COL_NAME_DISCOUNT,'</th>';
+    echo '<th>',COL_NAME_PRICE,'</th>';
+    echo '<th>',COL_NAME_TOTAL_PRICE,'</th>';
+    echo '<th>',COL_NAME_DESCRIPTION,'</th>';
+    echo '</tr>';
 }
 
 
@@ -388,7 +357,6 @@ function show_orders_table_view($order) {
 //------------------------------------------------------------------------
 
 function show_orders($orders, $orders_view) {
-    echo '<br/>';
     show_usual_title('Ваш заказ');
     
     switch ($orders_view) {
@@ -416,27 +384,22 @@ function show_section_total_info($total_info) {
     echo 'Общая сумма заказа: ',$total_info[KEY_TOTAL_PRICE_OF_ALL_ITEMS],'<br/>';
 }
 
-function if_is_existed_show_special_discounts_info() {
-    function show_special_discounts($item, $index) {
-        echo $item,'<br/>';
-    }
-
-    global $messages_section;
+function if_is_existed_show_special_discounts_info($messages_section) {
     if(count($messages_section) > 0) {
         show_usual_title('Обратите внимания:');
-        array_walk($messages_section, 'show_special_discounts');
+        foreach ($messages_section as $value) {
+            echo $value,'<br/>';
+        }
     }
 }
 
-function if_is_existed_show_usual_discounts_info() {
-    
-    function show_usual_discounts($item, $index) {
-        echo $item,'<br/>';
-    }
-
-    global $discounts;
+function if_is_existed_show_usual_discounts_info($discounts) {
     if(count($discounts) > 0) {
         show_usual_title('Ваши скидки:');
-        array_walk($discounts, 'show_usual_discounts');
+        foreach ($discounts as $value) {
+            echo $value,'<br/>';
+        }
     }
 }
+
+main_lesson4($bd);
