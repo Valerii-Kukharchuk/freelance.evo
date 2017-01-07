@@ -7,9 +7,7 @@ include_once 'news.php';
 function main_get($news) {
     $id = filter_input(INPUT_GET, param_id);
     
-    echo '<h3>Метод GET</h3>';
-    
-    show_news($news, $id);    
+    show_news($news, $id, 'Метод GET');    
 }
 
 main_get($news);

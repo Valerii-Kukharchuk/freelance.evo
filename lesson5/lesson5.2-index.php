@@ -15,13 +15,11 @@ function show_input_form() {
 function main_post($news) {    
     $id = filter_input(INPUT_POST, param_id);
     
-    echo '<h3>Метод POST</h3>';
-    
     show_input_form();
     
     echo '<br/>';
     
-    show_news($news, $id);
+    show_news($news, $id, 'Метод POST');
 }
 
 main_post($news);

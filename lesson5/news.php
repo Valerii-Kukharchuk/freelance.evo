@@ -16,7 +16,7 @@ define('COUNT_NEWS',count($news));
 
 const param_id = 'id';
 
-function show_news($news, $id) {
+function show_news($news, $id, $title) {
     
     function checkup_valid_id($news, $id) {
         return array_key_exists($id,$news);
@@ -30,6 +30,8 @@ function show_news($news, $id) {
         echo ' ...?id={!(0..',COUNT_NEWS,')} -- get whole list of news';
         exit();
     } 
+    
+    echo '<h3>',$title,'</h3>';
     
     if( checkup_valid_id($news, $id) ) {
         echo '<h3>Новость [',$id,']:</h3>';
