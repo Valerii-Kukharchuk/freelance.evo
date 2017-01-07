@@ -18,8 +18,8 @@ const param_id = 'id';
 
 function show_news($news, $id) {
     
-    function checkup_valid_id($id) {
-        return is_numeric($id) && $id >= 0 && $id < COUNT_NEWS;
+    function checkup_valid_id($news, $id) {
+        return array_key_exists($id,$news);
     }
    
     if( is_null($id) ) {
@@ -31,7 +31,7 @@ function show_news($news, $id) {
         exit();
     } 
     
-    if( checkup_valid_id($id) ) {
+    if( checkup_valid_id($news, $id) ) {
         echo '<h3>Новость [',$id,']:</h3>';
         echo $news[$id],'<br/>';
     } else {      
