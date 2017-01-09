@@ -10,8 +10,10 @@
       
         <form action="add_new_ad.php" method="post">
             <div class="form-row-indented">
-                <label class="form-label-radio"><input type="radio" checked="" value="1" name="private">Частное лицо</label>
-                <label class="form-label-radio"><input type="radio" value="0" name="private">Компания</label> 
+                <label class="form-label-radio">
+                    <input id="id_radio_private_person" type="radio" checked="" value="1" name="private">Частное лицо</label>
+                <label class="form-label-radio">
+                    <input id="id_radio_company" type="radio" value="0" name="private">Компания</label> 
             </div>
             
             <div class="form-row"> 
