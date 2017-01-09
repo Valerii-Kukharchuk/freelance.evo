@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
     <head>
@@ -6,10 +7,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
-        
-        <!-------->
-
-        <form  method="post">
+      
+        <form action="add_new_ad.php" method="post">
             <div class="form-row-indented">
                 <label class="form-label-radio"><input type="radio" checked="" value="1" name="private">Частное лицо</label>
                 <label class="form-label-radio"><input type="radio" value="0" name="private">Компания</label> 
@@ -264,9 +263,8 @@
                     <input type="submit" value="Далее" id="form_submit" name="main_form_submit" class="vas-submit-input"> 
                 </div>
             </div>
-        </form>
+        </form>         
         
-        <!---------------->
     </body>
 </html>
 
