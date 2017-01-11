@@ -1,19 +1,10 @@
 <?php
 
-//include_once 'utils.php';
+session_start();
 
 function get_id_for_new_ad() {
-//    static $ad_id = 0;
-//    return ++$ad_id;
     return 'key_'.time();
 }
-
-//------------------------------------------------------------
-//------------------------------------------------------------
-
-//if( is_session_started() === FALSE ) {
-    session_start();
-//}
 
 $_SESSION[get_id_for_new_ad()] = $_POST;
 

@@ -1,6 +1,8 @@
 <?php
 
-session_start();
+//session_start();
+
+include_once 'all_ads.php';
 
 $dom = new DOMDocument();
 $dom->loadHTML(file_get_contents('form_ad.php'));
@@ -118,6 +120,6 @@ function get_elem_id_by_name_param($key) {
 
 echo $dom->saveHTML();
 
-include_once 'all_ads.php';            
+//include_once 'all_ads.php';            
 show_all_ads();
 
