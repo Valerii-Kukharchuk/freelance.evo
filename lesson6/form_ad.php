@@ -8,38 +8,50 @@
     </head>
     <body>
       
-        <form action="add_new_ad.php" method="post">
+        <form action="lesson6-index.php?action=add" method="post">
+            <input type="hidden" name="action" value="add">
             <div class="form-row-indented">
                 <label class="form-label-radio">
-                    <input id="id_radio_private_person" type="radio" checked="" value="1" name="private">Частное лицо</label>
+                    <input id="id_radio_private_person" type="radio" 
+                           <?php echo $showing_ad[SHOWING_AD_RADIO_PRIVATE_PERSON]; ?> value="1" name="private">Частное лицо</label>
                 <label class="form-label-radio">
-                    <input id="id_radio_company" type="radio" value="0" name="private">Компания</label> 
+                    <input id="id_radio_company" type="radio" 
+                           <?php echo $showing_ad[SHOWING_AD_RADIO_COMPANY]; ?> value="0" name="private">Компания</label> 
             </div>
             
             <div class="form-row"> 
                 <label for="fld_seller_name" class="form-label"><b id="your-name">Ваше имя</b></label>
-                <input type="text" maxlength="40" class="form-input-text" value="" name="seller_name" id="fld_seller_name">
+                <input type="text" maxlength="40" class="form-input-text" 
+                       value=<?php echo '"',$showing_ad[SHOWING_AD_SELLER_NAME],'"';?>
+                       name="seller_name" id="fld_seller_name">
             </div>
             
             <div style="display: none;" id="your-manager" class="form-row"> 
                 <label for="fld_manager" class="form-label"><b>Контактное лицо</b></label> 
-                <input type="text" class="form-input-text" maxlength="40" value="" name="manager" id="fld_manager">
+                <input type="text" class="form-input-text" maxlength="40" 
+                       value=<?php echo '"',$showing_ad[SHOWING_AD_MANAGER],'"';?>
+                       name="manager" id="fld_manager">
                 <em class="f_r_g">&nbsp;&nbsp;необязательно</em>
             </div>
             
             <div class="form-row"> <label for="fld_email" class="form-label">Электронная почта</label>
-                <input type="text" class="form-input-text" value="" name="email" id="fld_email">
+                <input type="text" class="form-input-text" 
+                       value=<?php echo '"',$showing_ad[SHOWING_AD_EMAIL],'"';?> name="email" id="fld_email">
             </div>
             
             <div class="form-row-indented"> 
                 <label class="form-label-checkbox" for="allow_mails"> 
-                    <input type="checkbox" value="1" name="allow_mails" id="allow_mails" class="form-input-checkbox"><span class="form-text-checkbox">Я не хочу получать вопросы по объявлению по e-mail</span> 
+                    <input type="checkbox" 
+                           value=<?php echo '"',$showing_ad[SHOWING_AD_ALLOW_MAILS],'"';?> name="allow_mails" 
+                           id="allow_mails" class="form-input-checkbox">
+                    <span class="form-text-checkbox">Я не хочу получать вопросы по объявлению по e-mail</span> 
                 </label> 
             </div>
             
             <div class="form-row"> 
                 <label id="fld_phone_label" for="fld_phone" class="form-label">Номер телефона</label> 
-                <input type="text" class="form-input-text" value="" name="phone" id="fld_phone">
+                <input type="text" class="form-input-text" 
+                       value=<?php echo '"',$showing_ad[SHOWING_AD_PHONE],'"';?> name="phone" id="fld_phone">
             </div>
             
             <div id="f_location_id" class="form-row form-row-required"> 
@@ -47,7 +59,8 @@
                 <select title="Выберите Ваш город" name="location_id" id="region" class="form-input-select"> 
                     <option value="">-- Выберите город --</option>
                     <option class="opt-group" disabled="disabled">-- Города --</option>
-                    <option selected="" data-coords=",," value="641780">Новосибирск</option>   
+                    <?php print_options_of_cities($showing_ad[SHOWING_AD_LOCATION_ID]);?>
+<!--                    <option selected="" data-coords=",," value="641780">Новосибирск</option>   
                     <option data-coords=",," value="641490">Барабинск</option>   
                     <option data-coords=",," value="641510">Бердск</option>   
                     <option data-coords=",," value="641600">Искитим</option>   
@@ -57,14 +70,15 @@
                     <option data-coords=",," value="641760">Мошково</option>   
                     <option data-coords=",," value="641790">Обь</option>   
                     <option data-coords=",," value="641800">Ордынское</option>   
-                    <option data-coords=",," value="641970">Черепаново</option>   
+                    <option data-coords=",," value="641970">Черепаново</option>   -->
                     <option id="select-region" value="0">Выбрать другой...</option> 
                 </select> 
                 
                 <div id="f_metro_id"> 
                     <select title="Выберите станцию метро" name="metro_id" id="fld_metro_id" class="form-input-select"> 
                         <option value="">-- Выберите станцию метро --</option>
-                        <option value="2028">Берёзовая роща</option>
+                        <?php print_options_of_metro_stations($showing_ad[SHOWING_AD_METRO_ID]);?>
+<!--                        <option value="2028">Берёзовая роща</option>
                         <option value="2018">Гагаринская</option>
                         <option value="2017">Заельцовская</option>
                         <option value="2029">Золотая Нива</option>
@@ -76,7 +90,7 @@
                         <option value="2024">Площадь Маркса</option>
                         <option value="2022">Речной вокзал</option>
                         <option value="2026">Сибирская</option>
-                        <option value="2023">Студенческая</option>
+                        <option value="2023">Студенческая</option>-->
                     </select> 
                 </div> 
                 
@@ -267,8 +281,8 @@
             </div>
         </form>         
         
-    </body>
-</html>
+<!--    </body>
+</html>-->
 
 
 

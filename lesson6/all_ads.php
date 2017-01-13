@@ -8,8 +8,6 @@ const AD_PARAM_TITLE = 'title';
 const AD_PARAM_PRICE = 'price';
 const AD_PARAM_SELLER_NAME = 'seller_name';
 
-
-
 function show_all_ads() {
     echo '<h3> Ваши объявления: </h3>';
 
